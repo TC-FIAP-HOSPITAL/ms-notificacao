@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: API de Notificações de Consultas
+  version: 1.0.0
+  description: |-
+    API responsável por agendar, enviar e gerenciar lembretes automáticos aos pacientes sobre consultas futuras.
+
+tags:
+  - name: Notificacoes
+    description: Operações relacionadas às notificações de consultas médicas
+
+paths:
+  /notificacoes:
+    get:
+      summary: Buscar e filtrar notificações agendadas
+      operationId: buscarNotificacoes
+      tags:
+        - Notificacoes
+      parameters:
+        - name: idPaciente
+          in: query
+          schema:
+            $ref: '#/components/schemas/PacienteId'
+        - name: idConsulta
+          in: query
+          schema:
+            $ref: '#/components/schemas/ConsultaId'
+        - name: idNotificacao
+          in: query
+          schema:
+            $ref: '#/components/schemas/NotificacaoId'
+      responses:
+        '200':
+          description: Lista de notificações resumidas que correspondem aos filtros.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificacaoResponse'
+        '500':
+          description: Erro interno no servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Agendar uma nova notificação
+      operationId: criarNotificacao
+      tags:
+        - Notificacoes
+      requestBody:
+        description: Dados para o agendamento de uma nova notificação.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificacaoRequest'
+      responses:
+        '201':
+          description: Notificação agendada com sucesso. O status inicial será 'PENDENTE'.
+        '400':
+          description: Requisição inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /notificacoes/{idNotificacao}:
+    put:
+      summary: Atualizar uma notificação agendada
+      operationId: atualizarNotificacao
+      tags:
+        - Notificacoes
+      parameters:
+        - name: idNotificacao
+          in: path
+          required: true
+          description: ID da notificação a ser atualizada.
+          schema:
+            $ref: '#/components/schemas/NotificacaoId'
+      requestBody:
+        description: Campos que podem ser atualizados em uma notificação (o status é controlado pelo sistema).
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificacaoAtualizarRequest'
+      responses:
+        '204':
+          description: Notificação atualizada com sucesso.
+        '400':
+          description: Requisição inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Notificação não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Cancelar/Remover uma notificação agendada
+      operationId: removerNotificacao
+      tags:
+        - Notificacoes
+      parameters:
+        - name: idNotificacao
+          in: path
+          required: true
+          description: ID da notificação a ser removida.
+          schema:
+            $ref: '#/components/schemas/NotificacaoId'
+      responses:
+        '204':
+          description: Notificação removida/cancelada com sucesso.
+        '404':
+          description: Notificação não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    NotificacaoId:
+      type: integer
+      format: int64
+      description: Identificador único da notificação.
+      example: 1
+
+    PacienteId:
+      type: integer
+      format: int64
+      description: Identificador único do paciente.
+      example: 1
+
+    ConsultaId:
+      type: integer
+      format: int64
+      description: Identificador único da consulta.
+      example: 202
+
+    Canal:
+      type: string
+      description: Canal de comunicação para envio da notificação.
+      enum: [SMS, EMAIL, WHATSAPP, PUSH]
+      example: "EMAIL"
+
+    StatusNotificacao:
+      type: string
+      description: "Status do ciclo de vida da notificação: PENDENTE (agendada), ENVIADA (com sucesso), FALHA (erro no envio), CANCELADA (removida antes do envio)."
+      enum: [PENDENTE, ENVIADA, FALHA, CANCELADA]
+      example: "ENVIADA"
+
+    DataAgendamentoEnvio:
+      type: string
+      format: date-time
+      description: Data e hora programadas para o envio da notificação.
+      example: "2025-09-24T09:00:00-03:00"
+
+    DataEnvio:
+      type: string
+      format: date-time
+      description: Data e hora em que a notificação foi efetivamente enviada.
+      example: "2025-09-24T09:01:30-03:00"
+
+    Mensagem:
+      type: string
+      description: Conteúdo da mensagem a ser enviada.
+      example: "Olá Marcos, lembramos que você tem consulta amanhã às 09h com o Dr. João Silva (Cardiologia)."
+
+    TentativasEnvio:
+      type: integer
+      description: Número de tentativas de envio realizadas.
+      example: 1
+
+    NotificacaoRequest:
+      type: object
+      description: Dados necessários para agendar uma nova notificação.
+      required: [idPaciente, idConsulta, canal, dataAgendamentoEnvio, mensagem]
+      properties:
+        idPaciente:
+          $ref: '#/components/schemas/PacienteId'
+        idConsulta:
+          $ref: '#/components/schemas/ConsultaId'
+        canal:
+          $ref: '#/components/schemas/Canal'
+        dataAgendamentoEnvio:
+          $ref: '#/components/schemas/DataAgendamentoEnvio'
+        mensagem:
+          $ref: '#/components/schemas/Mensagem'
+
+    NotificacaoAtualizarRequest:
+      type: object
+      description: Dados permitidos para atualização de uma notificação. O status não pode ser alterado diretamente por esta operação.
+      properties:
+        canal:
+          $ref: '#/components/schemas/Canal'
+        mensagem:
+          $ref: '#/components/schemas/Mensagem'
+        dataAgendamentoEnvio:
+          $ref: '#/components/schemas/DataAgendamentoEnvio'
+
+    NotificacaoResponse:
+      type: object
+      description: Representação resumida de uma notificação, ideal para listagens.
+      properties:
+        idNotificacao:
+          $ref: '#/components/schemas/NotificacaoId'
+        idPaciente:
+          $ref: '#/components/schemas/PacienteId'
+        idConsulta:
+          $ref: '#/components/schemas/ConsultaId'
+        canal:
+          $ref: '#/components/schemas/Canal'
+        status:
+          $ref: '#/components/schemas/StatusNotificacao'
+        dataAgendamentoEnvio:
+          $ref: '#/components/schemas/DataAgendamentoEnvio'
+
+    NotificacaoDetalhadaResponse:
+      type: object
+      description: Representação completa de uma notificação com todos os seus detalhes.
+      properties:
+        idNotificacao:
+          $ref: '#/components/schemas/NotificacaoId'
+        idPaciente:
+          $ref: '#/components/schemas/PacienteId'
+        idConsulta:
+          $ref: '#/components/schemas/ConsultaId'
+        canal:
+          $ref: '#/components/schemas/Canal'
+        status:
+          $ref: '#/components/schemas/StatusNotificacao'
+        dataAgendamentoEnvio:
+          $ref: '#/components/schemas/DataAgendamentoEnvio'
+        dataEnvio:
+          $ref: '#/components/schemas/DataEnvio'
+        mensagem:
+          $ref: '#/components/schemas/Mensagem'
+        tentativasEnvio:
+          $ref: '#/components/schemas/TentativasEnvio'
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-09-23T21:00:00-03:00"
+        status:
+          type: integer
+          example: 404
+        error:
+          type: string
+          example: "Not Found"
+        message:
+          type: string
+          example: "Notificação não encontrada para o ID informado"
+        path:
+          type: string
+          example: "/notificacoes/999"
