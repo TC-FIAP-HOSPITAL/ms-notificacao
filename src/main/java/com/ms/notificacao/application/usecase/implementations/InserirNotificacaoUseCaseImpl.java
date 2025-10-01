@@ -2,6 +2,7 @@ package com.ms.notificacao.application.usecase.implementations;
 
 import com.ms.notificacao.application.gateways.Notificacao;
 import com.ms.notificacao.application.usecase.InserirNotificacaoUseCase;
+import com.ms.notificacao.domain.enums.StatusNotificacaoEnum;
 import com.ms.notificacao.domain.model.NotificacaoDomain;
 import com.ms.notificacao.domain.rules.ValidarCamposObrigatoriosRule;
 
@@ -16,6 +17,8 @@ public class InserirNotificacaoUseCaseImpl implements InserirNotificacaoUseCase 
     @Override
     public void inserir(NotificacaoDomain domain) {
         ValidarCamposObrigatoriosRule.validarCamposObrigatorios(domain.getMensagem());
+
+        domain.setStatus(StatusNotificacaoEnum.PENDENTE);
         notificacao.salvar(domain);
     }
 }

@@ -179,21 +179,10 @@ components:
       description: Data e hora programadas para o envio da notificação.
       example: "2025-09-24T09:00:00-03:00"
 
-    DataEnvio:
-      type: string
-      format: date-time
-      description: Data e hora em que a notificação foi efetivamente enviada.
-      example: "2025-09-24T09:01:30-03:00"
-
     Mensagem:
       type: string
       description: Conteúdo da mensagem a ser enviada.
       example: "Olá Marcos, lembramos que você tem consulta amanhã às 09h com o Dr. João Silva (Cardiologia)."
-
-    TentativasEnvio:
-      type: integer
-      description: Número de tentativas de envio realizadas.
-      example: 1
 
     NotificacaoRequest:
       type: object
@@ -236,31 +225,10 @@ components:
           $ref: '#/components/schemas/Canal'
         status:
           $ref: '#/components/schemas/StatusNotificacao'
-        dataAgendamentoEnvio:
-          $ref: '#/components/schemas/DataAgendamentoEnvio'
-
-    NotificacaoDetalhadaResponse:
-      type: object
-      description: Representação completa de uma notificação com todos os seus detalhes.
-      properties:
-        idNotificacao:
-          $ref: '#/components/schemas/NotificacaoId'
-        idPaciente:
-          $ref: '#/components/schemas/PacienteId'
-        idConsulta:
-          $ref: '#/components/schemas/ConsultaId'
-        canal:
-          $ref: '#/components/schemas/Canal'
-        status:
-          $ref: '#/components/schemas/StatusNotificacao'
-        dataAgendamentoEnvio:
-          $ref: '#/components/schemas/DataAgendamentoEnvio'
-        dataEnvio:
-          $ref: '#/components/schemas/DataEnvio'
         mensagem:
           $ref: '#/components/schemas/Mensagem'
-        tentativasEnvio:
-          $ref: '#/components/schemas/TentativasEnvio'
+        dataAgendamentoEnvio:
+          $ref: '#/components/schemas/DataAgendamentoEnvio'
 
     ErrorResponse:
       type: object
