@@ -13,7 +13,7 @@ import org.springframework.amqp.support.converter.MessageConverter;
 public class RabbitMQConfig {
 
     public static final String EXCHANGE_NAME = "agendamento-exchange";
-    public static final String ROUTING_KEY = "agendamento-routing-key";
+    public static final String ROUTING_KEY = "agendamento-routingKey";
     public static final String NOTIFICACAO_QUEUE_NAME = "notificacao-queue";
 
     @Bean

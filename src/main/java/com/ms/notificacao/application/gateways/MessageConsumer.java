@@ -4,5 +4,5 @@ import com.ms.notificacao.infraestrutura.messaging.AgendamentoDto;
 
 public interface MessageConsumer {
 
-    void consume(AgendamentoDto message);
+    void enviaNotificacaoByBroker(AgendamentoDto message);
 }
