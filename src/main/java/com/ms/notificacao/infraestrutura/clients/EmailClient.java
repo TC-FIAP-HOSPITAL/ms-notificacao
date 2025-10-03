@@ -3,8 +3,10 @@ package com.ms.notificacao.infraestrutura.clients;
 import com.ms.notificacao.infraestrutura.config.BrevoProperties;
 import com.ms.notificacao.infraestrutura.dto.EmailRequestDto;
 import org.springframework.http.*;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+@Service
 public class EmailClient {
 
     private final RestTemplate restTemplate;

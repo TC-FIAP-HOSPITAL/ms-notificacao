@@ -43,7 +43,7 @@ public class MessageConsumerImpl implements MessageConsumer {
                     message.pacienteId(), message.id(), message.dataAgendamento(), message.status(), message.tipoAtendimento()
             );
 
-            UsuarioResponseDto userResponse = usuarioClientPort.buscaUsuarioID(message.pacienteId(), "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInVzZXJJZCI6IjEiLCJpYXQiOjE3NTk0NTA3MjUsImV4cCI6MTc1OTUzNzEyNX0.T--5u7m7qSf1JwTx0CT1NXGmLe7JKc6mAqAsFibAV2Y");
+            UsuarioResponseDto userResponse = usuarioClientPort.buscaUsuarioID(message.pacienteId(), "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInVzZXJJZCI6IjEiLCJpYXQiOjE3NTk0NTg2MzksImV4cCI6MTc1OTU0NTAzOX0.LAEXJNacXltWepzbF-8wcdSq7tXGFL6e_0hBRA-CTxA");
 
             if(userResponse.email() != null){
                 emailSender(message, userResponse);
@@ -69,13 +69,11 @@ public class MessageConsumerImpl implements MessageConsumer {
                 dataFormatada
         );
 
-        // Cria o DTO do e-mail
         var emailRequest = new EmailRequestDto(
-                new EmailRequestDto.Sender("Sistema de Notificação", "no-reply@minhaempresa.com"),
-                List.of(new EmailRequestDto.Recipient(userResponse.name(), userResponse.email())),
+                new EmailRequestDto.Sender("SISTEMA AGENDAMENTO", "ghustavo516@gmail.com"),
+                List.of(new EmailRequestDto.Recipient(userResponse.email(), userResponse.name())),
                 message.tipoAtendimento(),
-                msg,
-                new EmailRequestDto.Recipient("Suporte", "suporte@minhaempresa.com")
+                msg
         );
 
         // Envia o e-mail
