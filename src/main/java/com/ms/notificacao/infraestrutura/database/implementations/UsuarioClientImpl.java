@@ -20,7 +20,7 @@ public class UsuarioClientImpl implements UsuarioClientPort {
 
     @Override
     public UsuarioResponseDto buscaUsuarioID(Long id, String jwtToken) {
-        String url = "http://localhost:8080/users/" + id;
+        String url = "http://localhost:9088/v1/users/" + id;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(jwtToken);
