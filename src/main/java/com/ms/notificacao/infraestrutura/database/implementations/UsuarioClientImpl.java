@@ -23,7 +23,7 @@ public class UsuarioClientImpl implements UsuarioClientPort {
         String url = "http://localhost:8080/users/" + id;
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(jwtToken); // mais simples que headers.set("Authorization", ...)
+        headers.setBearerAuth(jwtToken);
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 

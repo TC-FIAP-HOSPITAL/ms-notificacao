@@ -1,8 +1,8 @@
 package com.ms.notificacao.application.gateways;
 
-import com.ms.notificacao.infraestrutura.messaging.AgendamentoDto;
+import org.springframework.amqp.core.Message;
 
 public interface MessageConsumer {
 
-    void enviaNotificacaoByBroker(AgendamentoDto message);
+    void enviaNotificacaoByBroker(Message message);
 }
