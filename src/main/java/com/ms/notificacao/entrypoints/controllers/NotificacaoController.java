@@ -10,9 +10,12 @@ import com.ms.notificacao.application.usecase.DeletarNotificacaoUseCase;
 import com.ms.notificacao.application.usecase.InserirNotificacaoUseCase;
 import com.ms.notificacao.domain.model.NotificacaoDomain;
 import com.ms.notificacao.entrypoints.controllers.presenter.NotificacaoPresenter;
+import com.ms.notificacao.infraestrutura.config.security.Role;
+import com.ms.notificacao.infraestrutura.config.security.SecurityUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,15 +30,18 @@ public class NotificacaoController implements NotificacoesApi {
     private final BuscarNotificacaoUseCase buscarNotificacaoUseCase;
     private final InserirNotificacaoUseCase inserirNotificacaoUseCase;
     private final DeletarNotificacaoUseCase deletarNotificacaoUseCase;
+    private final SecurityUtil securityUtil;
 
     public NotificacaoController(AtualizarNotificacaoUseCase atualizarNotificacaoUseCase,
                                  BuscarNotificacaoUseCase buscarNotificacaoUseCase,
                                  InserirNotificacaoUseCase inserirNotificacaoUseCase,
-                                 DeletarNotificacaoUseCase deletarNotificacaoUseCase) {
+                                 DeletarNotificacaoUseCase deletarNotificacaoUseCase,
+                                 SecurityUtil securityUtil) {
         this.atualizarNotificacaoUseCase = atualizarNotificacaoUseCase;
         this.buscarNotificacaoUseCase = buscarNotificacaoUseCase;
         this.inserirNotificacaoUseCase = inserirNotificacaoUseCase;
         this.deletarNotificacaoUseCase = deletarNotificacaoUseCase;
+        this.securityUtil = securityUtil;
     }
 
     @Override
