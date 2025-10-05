@@ -1,25 +1,31 @@
-package com.ms.notificacao.infraestrutura.database.implementations;
+package com.ms.notificacao.infraestrutura.messaging.consumer;
 
 import com.ms.notificacao.application.gateways.MessageConsumer;
-import com.ms.notificacao.application.gateways.UsuarioClientPort;
 import com.ms.notificacao.application.usecase.InserirNotificacaoUseCase;
 import com.ms.notificacao.domain.enums.CanalEnum;
 import com.ms.notificacao.domain.enums.StatusNotificacaoEnum;
 import com.ms.notificacao.domain.model.NotificacaoDomain;
-import com.ms.notificacao.infraestrutura.clients.EmailClient;
-import com.ms.notificacao.infraestrutura.dto.EmailRequestDto;
-import com.ms.notificacao.infraestrutura.dto.UsuarioResponseDto;
+import com.ms.notificacao.infraestrutura.clients.brevo.BrevoEmailClient;
+import com.ms.notificacao.infraestrutura.clients.brevo.dto.EmailRequestDto;
+import com.ms.notificacao.infraestrutura.clients.brevo.dto.Recipient;
+import com.ms.notificacao.infraestrutura.clients.brevo.dto.Sender;
+import com.ms.notificacao.infraestrutura.clients.usuario.UsuarioClientImpl;
+import com.ms.notificacao.infraestrutura.clients.usuario.UsuarioDto;
 import com.ms.notificacao.infraestrutura.messaging.AgendamentoDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
 
 @Component
 public class MessageConsumerImpl implements MessageConsumer {
@@ -28,68 +34,34 @@ public class MessageConsumerImpl implements MessageConsumer {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
 
     private final InserirNotificacaoUseCase inserirNotificacaoUseCase;
-    private final UsuarioClientPort usuarioClientPort;
     private final MessageConverter messageConverter;
-    private final EmailClient emailClient;
+    private final UsuarioClientImpl usuarioClientPort;
+    private final BrevoEmailClient brevoEmailClient;
 
     public MessageConsumerImpl(InserirNotificacaoUseCase inserirNotificacaoUseCase,
-                               UsuarioClientPort usuarioClientPort,
                                MessageConverter messageConverter,
-                               EmailClient emailClient) {
+                               UsuarioClientImpl usuarioClientPort, BrevoEmailClient brevoEmailClient) {
         this.inserirNotificacaoUseCase = inserirNotificacaoUseCase;
-        this.usuarioClientPort = usuarioClientPort;
         this.messageConverter = messageConverter;
-        this.emailClient = emailClient;
+        this.usuarioClientPort = usuarioClientPort;
+        this.brevoEmailClient = brevoEmailClient;
     }
 
     @Override
     @RabbitListener(queues = "notificacao-queue")
-    public void enviaNotificacaoByBroker(final Message message) {
-        try {
-            AgendamentoDto agendamento = (AgendamentoDto) messageConverter.fromMessage(message);
-            if (Objects.isNull(agendamento)) {
-                logger.warn("Mensagem recebida é nula — ignorando processamento.");
-                return;
-            }
+    public void notification(@Payload AgendamentoDto agendamentoEvent,
+                             @Header ("Authorization") String tokenAuthenticator) {
 
-            String token = extractToken(message);
-            if (token == null) {
-                logger.warn("Token de autorização ausente no header da mensagem — notificações podem falhar.");
-            }
-
-            logger.info("Recebida mensagem para pacienteId={} | consultaId={} | dataAgendamento={} | status={} | tipoAtendimento={}",
-                    agendamento.pacienteId(),
-                    agendamento.id(),
-                    agendamento.dataAgendamento(),
-                    agendamento.status(),
-                    agendamento.tipoAtendimento()
-            );
-
-            // Busca usuário e envia notificação por e-mail
-            UsuarioResponseDto usuario = usuarioClientPort.buscaUsuarioID(agendamento.pacienteId(), token);
-            if (usuario != null && usuario.email() != null) {
-                enviarEmail(agendamento, usuario);
-            } else {
-                logger.warn("Usuário não encontrado ou sem e-mail cadastrado. ID: {}", agendamento.pacienteId());
-            }
-
-            // Cria registro no banco
-            criarNotificacao(agendamento);
-
-        } catch (Exception ex) {
-            logger.error("Erro ao processar mensagem da fila de notificação", ex);
+        if(tokenAuthenticator != null){
+            UsuarioDto usuario = usuarioClientPort.buscaUsuarioID(agendamentoEvent.pacienteId(), tokenAuthenticator);
+            enviarEmail(agendamentoEvent, usuario);
+        }else{
+            logger.warn("Não foi possivel enviar email devido bearer token estar null");
         }
+        armazenaNotificacao(agendamentoEvent);
     }
 
-    private String extractToken(Message message) {
-        Object authHeader = message.getMessageProperties().getHeaders().get("Authorization");
-        if (authHeader instanceof String auth) {
-            return auth.startsWith("Bearer ") ? auth.substring(7) : auth;
-        }
-        return null;
-    }
-
-    private void enviarEmail(AgendamentoDto agendamento, UsuarioResponseDto usuario) {
+    private String enviarEmail(AgendamentoDto agendamento, UsuarioDto usuario) {
         String dataFormatada = agendamento.dataAgendamento().format(FORMATTER);
 
         String conteudo = String.format(
@@ -102,17 +74,22 @@ public class MessageConsumerImpl implements MessageConsumer {
         );
 
         EmailRequestDto emailRequest = new EmailRequestDto(
-                new EmailRequestDto.Sender("SISTEMA AGENDAMENTO", "ghustavo516@gmail.com"),
-                List.of(new EmailRequestDto.Recipient(usuario.email(), usuario.name())),
+                new Sender("SISTEMA AGENDAMENTO", "ghustavo516@gmail.com"),
+                List.of(new Recipient(usuario.email(), usuario.name())),
                 agendamento.tipoAtendimento(),
                 conteudo
         );
 
-        emailClient.sendEmail(emailRequest);
-        logger.info("E-mail enviado para {}", usuario.email());
+        String response = brevoEmailClient.sendEmail(emailRequest);
+
+        if(HttpStatus.UNAUTHORIZED.equals(response)){
+            logger.error("Brevo API KEY expirada, altere a api key");
+        }
+        logger.info("E-mail enviado para {} com status {}", usuario.email(), response);
+        return response;
     }
 
-    private void criarNotificacao(AgendamentoDto agendamento) {
+    private void armazenaNotificacao(AgendamentoDto agendamento) {
         NotificacaoDomain notificacao = new NotificacaoDomain();
         notificacao.setIdConsulta(agendamento.id());
         notificacao.setIdPaciente(agendamento.pacienteId());
@@ -134,3 +111,4 @@ public class MessageConsumerImpl implements MessageConsumer {
         logger.info("Notificação salva no banco para pacienteId={} | consultaId={}", agendamento.pacienteId(), agendamento.id());
     }
 }
+
