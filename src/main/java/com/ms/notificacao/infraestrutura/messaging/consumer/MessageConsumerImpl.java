@@ -71,7 +71,7 @@ public class MessageConsumerImpl implements MessageConsumer {
         );
 
         EmailRequestDto emailRequest = new EmailRequestDto(
-                new Sender("SISTEMA AGENDAMENTO", "ghustavo516@gmail.com"),
+                new Sender("SISTEMA AGENDAMENTO", "myservice.techn@gmail.com"),
                 List.of(new Recipient(usuario.email(), usuario.name())),
                 agendamento.tipoAtendimento(),
                 conteudo
