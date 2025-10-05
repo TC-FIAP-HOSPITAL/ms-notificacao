@@ -1,4 +1,4 @@
-package com.ms.notificacao.infraestrutura.config;
+package com.ms.notificacao.infraestrutura.config.rabbitmq;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
