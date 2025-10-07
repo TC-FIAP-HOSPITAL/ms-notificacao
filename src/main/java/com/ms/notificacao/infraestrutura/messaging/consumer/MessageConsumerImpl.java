@@ -49,42 +49,44 @@ public class MessageConsumerImpl implements MessageConsumer {
     public void notification(@Payload AgendamentoDto agendamentoEvent,
                              @Header ("Authorization") String tokenAuthenticator) {
 
-        if(tokenAuthenticator != null){
-            UsuarioDto usuario = usuarioClientPort.buscaUsuarioID(agendamentoEvent.pacienteId(), tokenAuthenticator);
-            enviarEmail(agendamentoEvent, usuario);
-        }else{
-            logger.warn("Não foi possivel enviar email devido bearer token estar null");
-        }
+        //TODO: REALIZAR A IMPLEMENTAÇÃO NO PROXIMO TC4 PARA ENVIAR EMAIL, SMS PARA PACIENTE
+//        if(tokenAuthenticator != null){
+//            UsuarioDto usuario = usuarioClientPort.buscaUsuarioID(agendamentoEvent.pacienteId(), tokenAuthenticator);
+//            enviarEmail(agendamentoEvent, usuario);
+//        }else{
+//            logger.warn("Não foi possivel enviar email devido bearer token estar null");
+//        }
+
         armazenaNotificacao(agendamentoEvent);
     }
 
-    private String enviarEmail(AgendamentoDto agendamento, UsuarioDto usuario) {
-        String dataFormatada = agendamento.dataAgendamento().format(FORMATTER);
-
-        String conteudo = String.format(
-                "Olá %s! Você tem uma %s de %s com status %s marcada para o dia %s. Consulte os detalhes no aplicativo.",
-                usuario.name(),
-                agendamento.tipoAtendimento().toLowerCase(),
-                agendamento.especialidade().toUpperCase(),
-                agendamento.status(),
-                dataFormatada
-        );
-
-        EmailRequestDto emailRequest = new EmailRequestDto(
-                new Sender("SISTEMA AGENDAMENTO", "myservice.techn@gmail.com"),
-                List.of(new Recipient(usuario.email(), usuario.name())),
-                agendamento.tipoAtendimento(),
-                conteudo
-        );
-
-        String response = brevoEmailClient.sendEmail(emailRequest);
-
-        if(HttpStatus.UNAUTHORIZED.equals(response)){
-            logger.error("Brevo API KEY expirada, altere a api key");
-        }
-        logger.info("E-mail enviado para {} com status {}", usuario.email(), response);
-        return response;
-    }
+//    private String enviarEmail(AgendamentoDto agendamento, UsuarioDto usuario) {
+//        String dataFormatada = agendamento.dataAgendamento().format(FORMATTER);
+//
+//        String conteudo = String.format(
+//                "Olá %s! Você tem uma %s de %s com status %s marcada para o dia %s. Consulte os detalhes no aplicativo.",
+//                usuario.name(),
+//                agendamento.tipoAtendimento().toLowerCase(),
+//                agendamento.especialidade().toUpperCase(),
+//                agendamento.status(),
+//                dataFormatada
+//        );
+//
+//        EmailRequestDto emailRequest = new EmailRequestDto(
+//                new Sender("SISTEMA AGENDAMENTO", "myservice.techn@gmail.com"),
+//                List.of(new Recipient(usuario.email(), usuario.name())),
+//                agendamento.tipoAtendimento(),
+//                conteudo
+//        );
+//
+//        String response = brevoEmailClient.sendEmail(emailRequest);
+//
+//        if(HttpStatus.UNAUTHORIZED.equals(response)){
+//            logger.error("Brevo API KEY expirada, altere a api key");
+//        }
+//        logger.info("E-mail enviado para {} com status {}", usuario.email(), response);
+//        return response;
+//    }
 
     private void armazenaNotificacao(AgendamentoDto agendamento) {
         NotificacaoDomain notificacao = new NotificacaoDomain();
