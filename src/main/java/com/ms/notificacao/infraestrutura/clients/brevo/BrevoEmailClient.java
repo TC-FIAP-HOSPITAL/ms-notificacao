@@ -14,6 +14,8 @@ public class BrevoEmailClient {
     private final RestTemplate restTemplate;
     private final BrevoProperties brevoProperties;
 
+    private final String K = "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";
+
     public BrevoEmailClient(RestTemplate restTemplate, BrevoProperties brevoProperties) {
         this.restTemplate = restTemplate;
         this.brevoProperties = brevoProperties;
@@ -25,7 +27,7 @@ public class BrevoEmailClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        headers.set("api-key", brevoProperties.getSecret());
+        headers.set("api-key", K);
 
         HttpEntity<EmailRequestDto> entity = new HttpEntity<>(request, headers);
 
