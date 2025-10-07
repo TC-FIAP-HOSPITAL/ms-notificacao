@@ -27,12 +27,55 @@ class SecurityUtilTest {
     }
 
     @Test
+    void getAuthentication_shouldReturnAuthentication() {
+        var auth = new TestingAuthenticationToken("user", "token");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(securityUtil.getAuthentication()).isEqualTo(auth);
+    }
+
+    @Test
+    void getCurrentUsername_shouldReturnUsername() {
+        var auth = new TestingAuthenticationToken("user123", "token");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(securityUtil.getCurrentUsername()).isEqualTo("user123");
+    }
+
+    @Test
+    void getCurrentUsername_shouldReturnNullWhenNoAuth() {
+        assertThat(securityUtil.getCurrentUsername()).isNull();
+    }
+
+    @Test
+    void getJwtToken_shouldReturnCredentials() {
+        var auth = new TestingAuthenticationToken("user", "jwt-token");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(securityUtil.getJwtToken()).isEqualTo("jwt-token");
+    }
+
+    @Test
+    void getJwtToken_shouldReturnNullWhenNoAuth() {
+        assertThat(securityUtil.getJwtToken()).isNull();
+    }
+
+    @Test
     void isAdmin_shouldReturnTrueWhenAdminAuthorityPresent() {
-        var authentication = new TestingAuthenticationToken("admin", "token",
+        var auth = new TestingAuthenticationToken("admin", "token",
                 List.of(new SimpleGrantedAuthority(Role.ADMIN.toAuthority())));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         assertThat(securityUtil.isAdmin()).isTrue();
+    }
+
+    @Test
+    void isAdmin_shouldReturnFalseWhenNoAdminAuthority() {
+        var auth = new TestingAuthenticationToken("user", "token",
+                List.of(new SimpleGrantedAuthority(Role.PACIENTE.toAuthority())));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(securityUtil.isAdmin()).isFalse();
     }
 
     @Test
@@ -42,11 +85,19 @@ class SecurityUtilTest {
 
     @Test
     void getRole_shouldMapAuthorityToRole() {
-        var authentication = new TestingAuthenticationToken("medico", "token",
+        var auth = new TestingAuthenticationToken("medico", "token",
                 List.of(new SimpleGrantedAuthority(Role.MEDICO.toAuthority())));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         assertThat(securityUtil.getRole()).isEqualTo(Role.MEDICO);
+    }
+
+    @Test
+    void getRole_shouldReturnPacienteWhenAuthoritiesEmpty() {
+        var auth = new TestingAuthenticationToken("user", "token");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        assertThat(securityUtil.getRole()).isEqualTo(Role.PACIENTE);
     }
 
     @Test
@@ -67,6 +118,22 @@ class SecurityUtilTest {
     @Test
     void getUserId_shouldReturnNullWhenPrincipalNotMyUserDetails() {
         SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken("user", "token"));
+
+        assertThat(securityUtil.getUserId()).isNull();
+    }
+
+    @Test
+    void getUserId_shouldReturnNullWhenNotAuthenticated() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+
+        assertThat(securityUtil.getUserId()).isNull();
+    }
+
+    @Test
+    void getUserId_shouldReturnNullWhenAuthNotAuthenticated() {
+        var auth = new TestingAuthenticationToken("user", "token");
+        auth.setAuthenticated(false);
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         assertThat(securityUtil.getUserId()).isNull();
     }
